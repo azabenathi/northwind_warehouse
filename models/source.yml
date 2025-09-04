@@ -1,0 +1,13 @@
+version: 2
+
+sources:
+  - name: northwind
+    database: kings
+    schema: load
+    tables:
+      - name: employees
+      - name: employeeterritories
+      - name: territories
+      - name: region
+      - name: employee_history
+
