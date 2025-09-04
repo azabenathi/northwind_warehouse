@@ -3,7 +3,6 @@ with territories as (
 ),
 new_colums as (
     select
-        {{dbt_utils.generate_surrogate_key(["TerritoryID"])}} as hash_key,
         TerritoryID as territory_id,
         TerritoryDescription as territory_description,
         RegionID as region_id,

@@ -10,4 +10,11 @@ sources:
       - name: territories
       - name: region
       - name: employee_history
+      - name: categories
+      - name: customers
+      - name: products
+      - name: orders
+      - name: order_details
+      - name: shippers
+      - name: suppliers
 
