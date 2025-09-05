@@ -5,7 +5,7 @@ new_columns as (
     select
         categoryid as category_id,
         categoryname as category_name,
-        description
+        description,
         picture,
         current_timestamp() as dl_process_date,
         'I' as op,

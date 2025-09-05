@@ -3,7 +3,7 @@
         pre_hook="{{ initialize_dimension_audit('dim_products', 'stg_products', 'product_id') }}"
     )
 }}
--- test
+
 {% set dimension_name = 'dim_products' %}
 {% set audit_info = get_dimension_audit_info(dimension_name) %}
 
@@ -37,9 +37,9 @@
         {% set minutes_behind = ((current_date - last_processed).total_seconds() / 60) | int %}
     {% endif %}
 
-    {{ log('last_processed: '~last_processed, info=True)}}
-    {{ log('current_date: '~current_date, info=True)}}
-    {{ log('minutes_behind: '~minutes_behind, info=True)}}
+    {{ log('last_processed: ' ~ last_processed, info=True)}}
+    {{ log('current_date: ' ~ current_date, info=True)}}
+    {{ log('minutes_behind: ' ~ minutes_behind, info=True)}}
     
     {% set count = 1 %}
 
@@ -80,16 +80,11 @@
                             select
                                 supplier_id,
                                 company_name,
-                                contact_name,
-                                contact_title,
                                 address,
                                 city,
                                 region,
                                 postal_code,
                                 country,
-                                phone,
-                                fax,
-                                home_page,
                                 dl_process_date,
                                 op
                             from {{ suppliers_source }}
@@ -101,7 +96,6 @@
                                 category_id,
                                 category_name,
                                 description,
-                                picture,
                                 dl_process_date,
                                 op
                             from {{ categories_source }}
@@ -114,24 +108,17 @@
                             p.product_name,
                             p.quantity_per_unit,
                             p.unit_price,
-                            p.units_in_stock,
-                            p.units_on_order,
                             p.reorder_level,
                             p.discontinued,
+                            p.op,
                             s.company_name,
-                            s.contact_name,
-                            s.contact_title,
                             s.address,
                             s.city,
                             s.region,
                             s.postal_code,
                             s.country,
-                            s.phone,
-                            s.fax,
-                            s.home_page,
                             c.category_name,
                             c.description,
-                            c.picture,
                             greatest(
                                 p.dl_process_date,
                                 s.dl_process_date,
@@ -151,25 +138,16 @@
                                     'product_id',
                                     'product_name',
                                     'quantity_per_unit',
-                                    'unit_price',
-                                    'units_in_stock',
-                                    'units_on_order',
                                     'reorder_level',
                                     'discontinued',
                                     'company_name',
-                                    'contact_name',
-                                    'contact_title',
                                     'address',
                                     'city',
                                     'region',
                                     'postal_code',
                                     'country',
-                                    'phone',
-                                    'fax',
-                                    'home_page',
                                     'category_name',
                                     'description',
-                                    'picture'
                             ]) }} as row_hash,
                             row_number() over(partition by product_id order by max_dl_processed_date desc) as ranked   --- Not required: Data has duplicates (History)
                         from joined
@@ -179,24 +157,17 @@
                         product_name,
                         quantity_per_unit,
                         unit_price,
-                        units_in_stock,
-                        units_on_order,
                         reorder_level,
                         discontinued,
                         company_name,
-                        contact_name,
-                        contact_title,
                         address,
                         city,
                         region,
                         postal_code,
                         country,
-                        phone,
-                        fax,
-                        home_page,
                         category_name,
                         description,
-                        picture,
+                        op,
                         row_hash,
                         max_dl_processed_date as updated_at
                         -- To be removed: First time run of the Dim
@@ -226,7 +197,6 @@
                             ON p.supplier_id = s.supplier_id
                         INNER JOIN {{ categories_source }} AT (TIMESTAMP => '{{ time_travel }}'::timestamp_ntz) as c
                             ON p.category_id = c.category_id
-
                     WHERE greatest(
                         p.dl_process_date,
                         s.dl_process_date,
@@ -249,50 +219,33 @@
             0 as product_id,
             'Not Found' as product_name,
             'Not Found' as quantity_per_unit,
-            'Not Found' as unit_price,
-            'Not Found' as units_in_stock,
-            'Not Found' as units_on_order,
-            'Not Found' as reorder_level,
-            'Not Found' as discontinued,
+            0           as unit_price,
+            0           as reorder_level,
+            TRUE        as discontinued,
             'Not Found' as company_name,
-            'Not Found' as contact_name,
-            'Not Found' as contact_title,
             'Not Found' as address,
             'Not Found' as city,
             'Not Found' as region,
             'Not Found' as postal_code,
             'Not Found' as country,
-            'Not Found' as phone,
-            'Not Found' as fax,
-            'Not Found' as home_page,
             'Not Found' as category_name,
             'Not Found' as description,
-            'Not Found' as picture,
             'I' as op,
             {{ dbt_utils.generate_surrogate_key([
                'product_id',
                 'product_name',
-                'supplier_id',
                 'quantity_per_unit',
                 'unit_price',
-                'units_in_stock',
-                'units_on_order',
                 'reorder_level',
                 'discontinued',
                 'company_name',
-                'contact_name',
-                'contact_title',
                 'address',
                 'city',
                 'region',
                 'postal_code',
                 'country',
-                'phone',
-                'fax',
-                'home_page',
                 'category_name',
                 'description',
-                'picture'
             ]) }} as row_hash,
             to_timestamp_ntz('1900-01-01 10:00:00') as updated_at,
             to_timestamp_ntz('1900-01-01 10:00:00') as effective_date
@@ -303,50 +256,33 @@
             -1 as product_id,
             'Not Applicable' as product_name,
             'Not Applicable' as quantity_per_unit,
-            'Not Applicable' as unit_price,
-            'Not Applicable' as units_in_stock,
-            'Not Applicable' as units_on_order,
-            'Not Applicable' as reorder_level,
-            'Not Applicable' as discontinued,
+            -1               as unit_price,
+            -1               as reorder_level,
+            TRUE             as discontinued,
             'Not Applicable' as company_name,
-            'Not Applicable' as contact_name,
-            'Not Applicable' as contact_title,
             'Not Applicable' as address,
             'Not Applicable' as city,
             'Not Applicable' as region,
             'Not Applicable' as postal_code,
             'Not Applicable' as country,
-            'Not Applicable' as phone,
-            'Not Applicable' as fax,
-            'Not Applicable' as home_page,
             'Not Applicable' as category_name,
             'Not Applicable' as description,
-            'Not Applicable' as picture,
             'I' as op,
             {{ dbt_utils.generate_surrogate_key([
                'product_id',
                 'product_name',
-                'supplier_id',
                 'quantity_per_unit',
                 'unit_price',
-                'units_in_stock',
-                'units_on_order',
                 'reorder_level',
                 'discontinued',
                 'company_name',
-                'contact_name',
-                'contact_title',
                 'address',
                 'city',
                 'region',
                 'postal_code',
                 'country',
-                'phone',
-                'fax',
-                'home_page',
                 'category_name',
                 'description',
-                'picture'
             ]) }} as row_hash,
             to_timestamp_ntz('1900-01-01 10:00:00') as updated_at,
             to_timestamp_ntz('1900-01-01 10:00:00') as effective_date
