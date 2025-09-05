@@ -8,6 +8,9 @@
     }
 }}
 
+{% set dimension_name = 'fact_order' %}
+{% set audit_info = get_dimension_audit_info(dimension_name) %}
+
 select 
     od.order_id,
     od.product_id,
@@ -39,3 +42,7 @@ select
 from {{ ref('stg_order_details' )}} od 
 left join {{ ref('dim_products' )}} dp
     on dp.product_id = od.product_id and of.dl_process_date between dp.effective_date and dp.expiry_date
+
+{% if is_incremental() %}
+    where od.updated_at > TO_TIMESTAMP_NTZ('{{ audit_info.hwm_date }}')
+{% endif %}
