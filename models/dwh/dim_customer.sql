@@ -46,8 +46,8 @@ existing_records as (
             cast(null as string) as postal_code,
             cast(null as string) as country,
             cast(null as string) as phone,
-            cast(null as string) as fax,
             cast(null as int) as version_no,
+            cast(null as string) as fax,
             cast(null as string) as row_hash,
             cast(null as timestamp_ntz) as updated_at,
             cast(null as timestamp_ntz) as effective_date
@@ -68,38 +68,36 @@ scd_updates as (
         c.phone,
         c.fax,
         c.op,
-        c.version_no,
         c.row_hash,
         c.updated_at,
+        c.version_no,
         c.effective_date,
         {{ dbt_utils.generate_surrogate_key(['c.customer_id', 'c.effective_date']) }} as customer_scd_id,
         case when e.customer_id is null then 'N' else 'U' end as change_type  
     from source_data c
     left outer join existing_records e
-    on c.customer_id = e.customer_id
-
+    on e.customer_id = c.customer_id
     union all
-
     select
-        customer_scd_id,
-        customer_id,
-        company_name,
-        contact_name,
-        contact_title,
-        address,
-        city,
-        region,
-        postal_code,
-        country,
-        phone,
+        e.customer_id,
+        e.company_name,
+        e.contact_name,
+        e.contact_title,
+        e.address,
+        e.city,
+        e.region,
+        e.postal_code,
+        e.country,
+        e.phone,
         'I' as op,
-        fax,
-        version_no,
-        row_hash,
-        updated_at,
-        effective_date,
+        e.fax,
+        e.row_hash,
+        e.updated_at,
+        e.version_no,
+        e.effective_date,
+        e.customer_scd_id,
         'U' as change_type
-    from existing_records
+    from existing_records e
 ),
 new_updates_records as (
     select
@@ -114,14 +112,13 @@ new_updates_records as (
         postal_code,
         country,
         phone,
-        op,
         fax,
-        change_type,
         version_no,
+        change_type,
         row_hash,
         case 
             when op = 'D' then 'D'
-            when coalesce(lag(row_hash,1) over (partition by employee_id order by effective_date),'X') <> row_hash 
+            when coalesce(lag(row_hash,1) over (partition by customer_id order by effective_date),'X') <> row_hash 
                 then 'U' 
             else 'X' 
         end as UPD_IND,
@@ -144,28 +141,27 @@ new_records as (
         country,
         phone,
         fax,
-        version_no,
         row_hash,
         updated_at,
         case 
             when UPD_IND = 'D' then 'D'
-            when lead(effective_date,1) over (partition by employee_id order by effective_date) is null and UPD_IND <> 'D' then 'Y' 
+            when lead(effective_date,1) over (partition by customer_id order by effective_date) is null and UPD_IND <> 'D' then 'Y' 
             else 'N' 
         end as is_active,
         case
             when change_type = 'N' 
-                then row_number() over (partition by employee_id order by effective_date) 
-            when change_type = 'U' and row_number() over (partition by employee_id order by effective_date) > 1
-                then (First_value(version_no) over (partition by employee_id order by effective_date) + row_number() over (partition by employee_id order by effective_date)) - 1  -- Calculate new version
+                then row_number() over (partition by customer_id order by effective_date) 
+            when change_type = 'U' and row_number() over (partition by customer_id order by effective_date) > 1
+                then (First_value(version_no) over (partition by customer_id order by effective_date) + row_number() over (partition by customer_id order by effective_date)) - 1  -- Calculate new version
             else
                 version_no
         end as version_no,
         case 
-            when row_number() over (partition by employee_id order by effective_date) = 1 and change_type IN ('N') 
+            when row_number() over (partition by customer_id order by effective_date) = 1 and change_type IN ('N') 
                 then cast('1900-01-01' as date) 
             else effective_date 
         end as effective_date,  -- set effective date to 1900-01-01 for very first occurrence of a natural key else use effective date
-        coalesce(lead(effective_date,1) over (partition by employee_id order by effective_date), '3001-01-01'::timestamp_ntz) as expiry_date
+        coalesce(lead(effective_date,1) over (partition by customer_id order by effective_date), '3001-01-01'::timestamp_ntz) as expiry_date
     from new_updates_records
     where UPD_IND in ('U', 'D')
 )

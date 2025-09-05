@@ -103,15 +103,15 @@
             'Not Found' as fax,
             'I' as op,
             {{ dbt_utils.generate_surrogate_key([
-                "customer_id",
-                "company_name",
-                "contact_name",
-                "contact_title",
-                "address",
-                "city",
-                "region",
-                "contact_title",
-                "country"
+                'customer_id',
+                'company_name',
+                'contact_name',
+                'contact_title',
+                'address',
+                'city',
+                'region',
+                'contact_title',
+                'country'
             ]) }} as row_hash,
             to_timestamp_ntz('1900-01-01 10:00:00') as updated_at,
             to_timestamp_ntz('1900-01-01 10:00:00') as effective_date
@@ -132,15 +132,15 @@
             'Not Applicable' as fax,
             'I' as op,
             {{ dbt_utils.generate_surrogate_key([
-                "customer_id",
-                "company_name",
-                "contact_name",
-                "contact_title",
-                "address",
-                "city",
-                "region",
-                "contact_title",
-                "country"
+                'customer_id',
+                'company_name',
+                'contact_name',
+                'contact_title',
+                'address',
+                'city',
+                'region',
+                'contact_title',
+                'country'
             ]) }} as row_hash,
             to_timestamp_ntz('1900-01-01 10:00:00') as updated_at,
             to_timestamp_ntz('1900-01-01 10:00:00') as effective_date

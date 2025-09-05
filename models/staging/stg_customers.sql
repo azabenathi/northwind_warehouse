@@ -14,7 +14,7 @@ new_columns as (
         country,
         phone,
         fax,
-        current_timestamp() as dl_processed_date,
+        current_timestamp() as dl_process_date,
         'I' as op,
         {{ dbt_utils.generate_surrogate_key([
             "customer_id",
