@@ -183,9 +183,9 @@
                         region_description,
                         territory_description,
                         row_hash,
-                        max_dl_processed_date as updated_at
+                        max_dl_processed_date as updated_at,
                         -- To be removed: First time run of the Dim
-                    ,   {% if (audit_info.last_processed_date | string) == '1900-01-01 10:00:00' -%}
+                        {% if (audit_info.last_processed_date | string) == '1900-01-01 10:00:00' -%}
                             TO_TIMESTAMP_NTZ('{{ audit_info.last_processed_date }}')
                         {%- else -%}
                             TO_TIMESTAMP_NTZ('{{ time_travel }}')
@@ -321,4 +321,4 @@
     from ranked 
     where rn = 1 
     
-{% endif %}
+{% endif %} 

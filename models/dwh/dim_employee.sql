@@ -5,11 +5,6 @@
     post_hook="{{ updating_dimension_audit('dim_employee') }}"
 ) }}
 
-{% set dimension_name = 'dim_employee' %}
-{% set audit_info = get_dimension_audit_info(dimension_name) %}
-
-{{ log('audit_info: '~audit_info, info=True)}}
-
 with source_data as (
     select 
         *,
@@ -19,7 +14,7 @@ with source_data as (
 existing_records AS (
     {% if is_incremental() %}
         SELECT 
-            employee_scd_id,
+            employee_scd_id,        -- change to employee_sk
             employee_id,
             first_name,
             last_name,
@@ -191,7 +186,5 @@ new_records AS (
     where UPD_IND in ('U', 'D') --- filter on actual new or changed rows and deleted
 )
 
-select 
-    *
-from new_records
+select * from new_records
 
