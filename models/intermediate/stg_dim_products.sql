@@ -3,7 +3,7 @@
         pre_hook="{{ initialize_dimension_audit('dim_products', 'stg_products', 'product_id') }}"
     )
 }}
-
+-- test
 {% set dimension_name = 'dim_products' %}
 {% set audit_info = get_dimension_audit_info(dimension_name) %}
 
