@@ -58,7 +58,7 @@ existing_records AS (
             CAST(NULL AS STRING)    as row_hash,
             CAST(NULL AS INT)       as version_no,
             CAST(NULL AS TIMESTAMP_NTZ) as updated_at,
-            CAST(NULL AS TIMESTAMP_NTZ) as effective_date
+            CAST(NULL AS TIMESTAMP_NTZ) as effective_date,
             CAST(NULL AS TIMESTAMP_NTZ) as expiry_date
         WHERE FALSE
     {% endif %}
