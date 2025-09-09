@@ -1,6 +1,6 @@
 {{ config(
     materialized='incremental',
-    unique_key='customer_scd_id',
+    unique_key='customer_sk',
     on_schema_change='sync_all_columns',
     post_hook="{{ updating_dimension_audit('dim_customer') }}"
 ) }}
@@ -14,7 +14,7 @@ with source_data as (
 existing_records as (
     {% if is_incremental() %}
         select
-            customer_scd_id,
+            customer_sk,
             customer_id,
             company_name,
             contact_name,
@@ -35,7 +35,7 @@ existing_records as (
             and customer_id in (select distinct customer_id from source_data)
     {% else %}
         select
-            cast(null as string) as customer_scd_id,
+            cast(null as string) as customer_sk,
             cast(null as string) as customer_id,
             cast(null as string) as company_name,
             cast(null as string) as contact_name,
@@ -72,7 +72,7 @@ scd_updates as (
         c.updated_at,
         c.version_no,
         c.effective_date,
-        {{ dbt_utils.generate_surrogate_key(['c.customer_id', 'c.effective_date']) }} as customer_scd_id,
+        {{ dbt_utils.generate_surrogate_key(['c.customer_id', 'c.effective_date']) }} as customer_sk,
         case when e.customer_id is null then 'N' else 'U' end as change_type  
     from source_data c
     left outer join existing_records e
@@ -95,13 +95,13 @@ scd_updates as (
         e.updated_at,
         e.version_no,
         e.effective_date,
-        e.customer_scd_id,
+        e.customer_sk,
         'U' as change_type
     from existing_records e
 ),
 new_updates_records as (
     select
-        customer_scd_id,
+        customer_sk,
         customer_id,
         company_name,
         contact_name,
@@ -129,7 +129,7 @@ new_updates_records as (
 ),
 new_records as (
     select
-        customer_scd_id,
+        customer_sk,
         customer_id,
         company_name,
         contact_name,

@@ -1,6 +1,6 @@
 {{ config(
     materialized='incremental',
-    unique_key='shipper_scd_id',
+    unique_key='shipper_sk',
     on_schema_change='sync_all_columns',
     post_hook="{{ updating_dimension_audit('dim_customer') }}"
 ) }}
@@ -14,7 +14,7 @@ with source_data as (
 existing_records as (
     {% if is_incremental() %}
         select
-            shipper_scd_id,
+            shipper_sk,
             shipper_id,
             company_name,
             phone,
@@ -27,7 +27,7 @@ existing_records as (
             and shipper_id in (select distinct shipper_id from source_data)
     {% else %}
         select
-            cast(null as string) as shipper_scd_id,
+            cast(null as string) as shipper_sk,
             cast(null as int) as shipper_id,
             cast(null as string) as company_name,
             cast(null as string) as phone,
@@ -48,7 +48,7 @@ scd_updates as (
         c.updated_at,
         c.version_no,
         c.effective_date,
-        {{ dbt_utils.generate_surrogate_key(['c.shipper_id', 'c.effective_date']) }} as shipper_scd_id,
+        {{ dbt_utils.generate_surrogate_key(['c.shipper_id', 'c.effective_date']) }} as shipper_sk,
         case when e.shipper_id is null then 'N' else 'U' end as change_type  
     from source_data c
     left outer join existing_records e
@@ -63,13 +63,13 @@ scd_updates as (
         e.updated_at,
         e.version_no,
         e.effective_date,
-        e.shipper_scd_id,
+        e.shipper_sk,
         'U' as change_type
     from existing_records e
 ),
 new_updates_records as (
     select
-        shipper_scd_id,
+        shipper_sk,
         shipper_id,
         company_name,
         phone,
@@ -89,7 +89,7 @@ new_updates_records as (
 ),
 new_records as (
     select
-        shipper_scd_id,
+        shipper_sk,
         shipper_id,
         company_name,
         phone,

@@ -1,6 +1,6 @@
 {{ config(
     materialized='incremental',
-    unique_key='product_scd_id',
+    unique_key='product_sk',
     on_schema_change='sync_all_columns',
     post_hook="{{ updating_dimension_audit('dim_products') }}"
 ) }}
@@ -14,7 +14,7 @@ with source_data as (
 existing_records AS (
     {% if is_incremental() %}
         SELECT 
-            product_scd_id,
+            product_sk,
             product_id,
             product_name,
             quantity_per_unit,
@@ -40,7 +40,7 @@ existing_records AS (
     {% else %}
         -- Return empty result set on first run
         SELECT 
-            CAST(NULL AS STRING)    as product_scd_id,
+            CAST(NULL AS STRING)    as product_sk,
             CAST(NULL AS INT)       as product_id,
             CAST(NULL AS STRING)    as product_name,
             CAST(NULL AS STRING)    as quantity_per_unit,
@@ -85,7 +85,7 @@ scd_updates AS (
         s.version_no,
         -- Generate consistent surrogate key
         s.effective_date,
-        {{ dbt_utils.generate_surrogate_key(['s.product_id', 's.effective_date']) }} as product_scd_id,
+        {{ dbt_utils.generate_surrogate_key(['s.product_id', 's.effective_date']) }} as product_sk,
         case when e.product_id is null then 'N' else 'U' end as change_type  
     FROM source_data s
     left outer join existing_records e
@@ -111,13 +111,13 @@ scd_updates AS (
         s.updated_at,
         s.version_no,
         s.effective_date,
-        s.product_scd_id,
+        s.product_sk,
         'U' as change_type
     FROM existing_records s
 ),
 new_update_records AS (
     SELECT
-        product_scd_id,
+        product_sk,
         product_id,
         product_name,
         quantity_per_unit,
@@ -148,7 +148,7 @@ new_update_records AS (
 ),   
 new_records AS (
     SELECT
-        product_scd_id,
+        product_sk,
         product_id,
         product_name,
         quantity_per_unit,
