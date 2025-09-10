@@ -2,7 +2,7 @@
     materialized='incremental',
     unique_key='employee_sk',
     on_schema_change='sync_all_columns',
-    post_hook="{{ updating_dimension_audit('dim_employee') }}"
+    post_hook="{{ updating_audit('dim_employee') }}"
 ) }}
 
 with source_data as (

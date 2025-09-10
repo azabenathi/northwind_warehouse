@@ -2,7 +2,7 @@
     materialized='incremental',
     unique_key='shipper_sk',
     on_schema_change='sync_all_columns',
-    post_hook="{{ updating_dimension_audit('dim_customer') }}"
+    post_hook="{{ updating_audit('dim_customer') }}"
 ) }}
 
 with source_data as (

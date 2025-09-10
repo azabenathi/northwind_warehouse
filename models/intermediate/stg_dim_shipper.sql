@@ -1,11 +1,11 @@
 {{
     config(
-        pre_hook="{{ initialize_dimension_audit('dim_shippers', 'stg_shippers', 'shipper_id') }}"
+        pre_hook="{{ initialized_audit('dim_shippers', 'stg_shippers', 'shipper_id') }}"
     )
 }}
 
 {% set dimension_name = 'dim_shippers' %}
-{% set audit_info = get_dimension_audit_info(dimension_name) %}
+{% set audit_info = get_audit_info(dimension_name) %}
 
 {% set shipper_source = ref('stg_shippers') %}
 

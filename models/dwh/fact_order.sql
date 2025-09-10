@@ -3,13 +3,13 @@
         materialized='incremental',
         unique_key='order_id',
         on_schema_change='sync_all_columns',
-        pre_hook="{{ initialize_dimension_audit('fact_order', 'stg_orders', 'order_id') }}",
-        post_hook="{{ updating_dimension_audit('fact_order') }}"     
+        pre_hook="{{ initialized_audit('fact_order', 'stg_orders', 'order_id') }}",
+        post_hook="{{ updating_audit('fact_order') }}"     
     )
 }}
 
 {% set dimension_name = 'fact_order' %}
-{% set audit_info = get_dimension_audit_info(dimension_name) %}
+{% set audit_info = get_audit_info(dimension_name) %}
 
 with fct_source as (
     select

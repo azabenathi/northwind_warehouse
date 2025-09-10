@@ -1,11 +1,11 @@
 {{
     config(
-        pre_hook="{{ initialize_dimension_audit('dim_employee', 'stg_employees', 'employee_id') }}"
+        pre_hook="{{ initialized_audit('dim_employee', 'stg_employees', 'employee_id') }}"
     )
 }}
 
 {% set dimension_name = 'dim_employee' %}
-{% set audit_info = get_dimension_audit_info(dimension_name) %}
+{% set audit_info = get_audit_info(dimension_name) %}
 
 {{ log('audit_info: '~audit_info, info=True)}}
 

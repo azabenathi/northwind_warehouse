@@ -1,11 +1,11 @@
 {{
     config(
-        pre_hook="{{ initialize_dimension_audit('dim_customer', 'stg_customers', 'customer_id') }}"
+        pre_hook="{{ initialized_audit('dim_customer', 'stg_customers', 'customer_id') }}"
     )
 }}
 
 {% set dimension_name = 'dim_customer' %}
-{% set audit_info = get_dimension_audit_info(dimension_name) %}
+{% set audit_info = get_audit_info(dimension_name) %}
 
 {% set customer_source = ref('stg_customers') %}
 
