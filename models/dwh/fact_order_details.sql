@@ -19,7 +19,7 @@ select
     od.discount,
     od.dl_process_date as updated_at,
     od.op,
-    dp.product_scd_id,
+    dp.product_sk,
     dp.product_name,
     dp.quantity_per_unit,
     dp.reorder_level,
