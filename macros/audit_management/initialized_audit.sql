@@ -1,4 +1,4 @@
-{% macro initialize_dimension_audit(dimension_name, driver_table, business_key) %}
+{% macro initialized_audit(dimension_name, driver_table, business_key) %}
     
     {% set create_table %}
         

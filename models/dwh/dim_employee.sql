@@ -178,10 +178,10 @@ new_records AS (
         end as version_no,
         case 
             when row_number() over (partition by employee_id order by effective_date) = 1 and change_type IN ('N') 
-                then cast('1900-01-01' as date) 
+                then to_timestamp_ntz('1900-01-01 00:00:00') 
             else effective_date 
         end as effective_date,  -- set effective date to 1900-01-01 for very first occurrence of a natural key else use effective date
-        coalesce(lead(effective_date,1) over (partition by employee_id order by effective_date), '3001-01-01'::timestamp_ntz) as expiry_date
+        coalesce(lead(effective_date,1) over (partition by employee_id order by effective_date), to_timestamp_ntz('3001-01-01 00:00:00')) as expiry_date
     FROM new_update_records
     where UPD_IND in ('U', 'D') --- filter on actual new or changed rows and deleted
 )

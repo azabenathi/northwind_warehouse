@@ -149,7 +149,7 @@
                                     'category_name',
                                     'description',
                             ]) }} as row_hash,
-                            row_number() over(partition by product_id order by max_dl_processed_date desc) as ranked   --- Not required: Data has duplicates (History)
+                            row_number() over(partition by product_id order by TO_TIMESTAMP_NTZ(max_dl_processed_date) desc) as ranked   --- Not required: Data has duplicates (History)
                         from joined
                     )
                     select 
@@ -169,29 +169,29 @@
                         description,
                         op,
                         row_hash,
-                        max_dl_processed_date as updated_at
+                        TO_TIMESTAMP_NTZ(max_dl_processed_date) as updated_at
                         -- To be removed: First time run of the Dim
-                    ,   {% if (audit_info.last_processed_date | string) == '1900-01-01 10:00:00' -%}
+                    ,   {% if (audit_info.last_processed_date | string) == '1900-01-01 00:00:00' -%}
                             TO_TIMESTAMP_NTZ('{{ audit_info.last_processed_date }}')
                         {%- else -%}
                             TO_TIMESTAMP_NTZ('{{ time_travel }}')
                         {%- endif -%} as effective_date
                     from current_view
-                    where ranked = 1 and max_dl_processed_date > TO_TIMESTAMP_NTZ('{{ state.hwm_date }}') 
-                    -- and max_dl_processed_date <= TO_TIMESTAMP_NTZ('{{  time_travel  }}')
+                    where ranked = 1 and TO_TIMESTAMP_NTZ(max_dl_processed_date) > TO_TIMESTAMP_NTZ('{{ state.hwm_date }}') 
+                    -- and TO_TIMESTAMP_NTZ(max_dl_processed_date) <= TO_TIMESTAMP_NTZ('{{  time_travel  }}')
             -- The end of the model
                     
             )
 
             -- Updating the high watermark for the loop
         {% set max_processed_query %}
-                SELECT coalesce(max(max_dl_processed_date),TO_TIMESTAMP_NTZ('{{ state.hwm_date }}'))
+                SELECT coalesce(max(TO_TIMESTAMP_NTZ(max_dl_processed_date)),TO_TIMESTAMP_NTZ('{{ state.hwm_date }}'))
                 FROM (
                     SELECT greatest(
                         p.dl_process_date,
                         s.dl_process_date,
                         c.dl_process_date
-                    ) as max_dl_processed_date 
+                    ) as max_dl_processed_date
                     FROM {{ products_source }} AT (TIMESTAMP => '{{ time_travel }}'::timestamp_ntz) as p
                         INNER JOIN {{ suppliers_source }} AT (TIMESTAMP => '{{ time_travel }}'::timestamp_ntz) as s
                             ON p.supplier_id = s.supplier_id
@@ -247,8 +247,8 @@
                 'category_name',
                 'description',
             ]) }} as row_hash,
-            to_timestamp_ntz('1900-01-01 10:00:00') as updated_at,
-            to_timestamp_ntz('1900-01-01 10:00:00') as effective_date
+            to_timestamp_ntz('1900-01-01 00:00:00') as updated_at,
+            to_timestamp_ntz('1900-01-01 00:00:00') as effective_date
 
         union all
 
@@ -284,8 +284,8 @@
                 'category_name',
                 'description',
             ]) }} as row_hash,
-            to_timestamp_ntz('1900-01-01 10:00:00') as updated_at,
-            to_timestamp_ntz('1900-01-01 10:00:00') as effective_date
+            to_timestamp_ntz('1900-01-01 00:00:00') as updated_at,
+            to_timestamp_ntz('1900-01-01 00:00:00') as effective_date
     ),
     -- Last part | meeting
     ranked as (

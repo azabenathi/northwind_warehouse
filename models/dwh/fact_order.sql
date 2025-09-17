@@ -4,7 +4,7 @@
         unique_key='order_id',
         on_schema_change='sync_all_columns',
         pre_hook="{{ initialized_audit('fact_order', 'stg_orders', 'order_id') }}",
-        post_hook="{{ updating_audit('fact_order') }}"     
+        post_hook=["{{ fact_order_fail_lookup() }}", "{{ updating_audit('fact_order') }}"]   
     )
 }}
 
@@ -14,9 +14,9 @@
 with fct_source as (
     select
         fo.order_id,
-        coalesce(de.employee_sk, md5('0' || '-' || '1900-01-01 10:00:00')) as employee_sk,
-        coalesce(dc.customer_sk, md5('0' || '-' || '1900-01-01 10:00:00')) as customer_sk,
-        coalesce(ds.shipper_sk, md5('0' || '-' || '1900-01-01 10:00:00')) as shipper_sk,
+        coalesce(de.employee_sk, {{ dbt_utils.generate_surrogate_key(["0", "to_timestamp_ntz('1900-01-01 00:00:00')"]) }}) as employee_sk,
+        coalesce(dc.customer_sk, {{ dbt_utils.generate_surrogate_key(["0", "to_timestamp_ntz('1900-01-01 00:00:00')"]) }}) as customer_sk,
+        coalesce(ds.shipper_sk, {{ dbt_utils.generate_surrogate_key(["0", "to_timestamp_ntz('1900-01-01 00:00:00')"]) }}) as shipper_sk,
         fo.employee_id,
         fo.customer_id,
         fo.shipper_id,
@@ -28,6 +28,7 @@ with fct_source as (
         fo.ship_address,
         fo.ship_city,
         fo.ship_region,
+        fo.op as record_status,
         fo.ship_postal_code,
         fo.ship_country,
         fo.dl_process_date,
@@ -39,7 +40,7 @@ with fct_source as (
         on dc.customer_id = fo.customer_id and to_timestamp_ntz(fo.order_date) between dc.effective_date and dc.expiry_date
     left join {{ ref('dim_shipper') }} ds
         on ds.shipper_id = fo.shipper_id and to_timestamp_ntz(fo.order_date) between ds.effective_date and ds.expiry_date
-    where fo.dl_process_date > TO_TIMESTAMP_NTZ('{{ audit_info.hwm_date }}')
+    where TO_TIMESTAMP_NTZ(fo.dl_process_date) > TO_TIMESTAMP_NTZ('{{ audit_info.hwm_date }}')
 ),
 existing_fact as (
     {% if is_incremental() %}
@@ -62,6 +63,7 @@ existing_fact as (
             ship_postal_code,
             ship_country,
             row_hash,
+            record_status,
             dl_process_date,
             created_at,
             updated_at
@@ -87,6 +89,7 @@ existing_fact as (
             cast(null as string) as ship_postal_code,
             cast(null as string) as ship_country,
             cast(null as string) as row_hash,
+            cast(null as string) as record_status,
             CAST(NULL AS TIMESTAMP_NTZ) as dl_process_date,
             CAST(NULL AS TIMESTAMP_NTZ) as updated_at,
             CAST(NULL AS TIMESTAMP_NTZ) as created_at
@@ -114,6 +117,7 @@ final as (
         fs.ship_country,
         fs.dl_process_date,
         fs.row_hash,
+        fs.record_status,
         case
             when ef.order_id is null
                 then current_timestamp()
@@ -124,7 +128,9 @@ final as (
     from fct_source fs
     left join existing_fact ef
         on ef.order_id = fs.order_id
-    where ef.order_id is null or (ef.order_id is not null and ef.row_hash <> fs.row_hash)
+    where ef.order_id is null 
+        or (ef.order_id is not null and ef.row_hash <> fs.row_hash)
+        or (ef.order_id is not null and ef.record_status <> 'D' and fs.record_status = 'D')
 )
 
 select * from final

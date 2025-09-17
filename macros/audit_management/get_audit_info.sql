@@ -1,4 +1,4 @@
-{% macro get_dimension_audit_info(dimension_name) %}
+{% macro get_audit_info_copy(dimension_name) %}
     {% if execute %}
         {% set audit_query %}
             SELECT 
@@ -9,7 +9,7 @@
                 is_processed as is_processed,
                 is_initialized as is_initialized
             FROM audit.audit_control
-            WHERE dimension_name = '{{ dimension_name }}'
+            WHERE entity = '{{ dimension_name }}'
             
         {% endset %}
 
@@ -27,8 +27,8 @@
             } %}
         {% else %}
             {% set audit_info = {
-                'hwm_date': modules.datetime.datetime(1900,1,1,10,0,0),
-                'last_processed_date': modules.datetime.datetime(1900,1,1,10,0,0),
+                'hwm_date': modules.datetime.datetime(1900,1,1,0,0,0),
+                'last_processed_date': modules.datetime.datetime(1900,1,1,0,0,0),
                 'driver_table': '',
                 'business_key': '',
                 'is_processed': false,
@@ -39,8 +39,8 @@
     {% else %}
 
         {{ return({
-            'hwm_date': modules.datetime.datetime(1900,1,1,10,0,0),
-            'last_processed_date': modules.datetime.datetime(1900,1,1,10,0,0),
+            'hwm_date': modules.datetime.datetime(1900,1,1,0,0,0),
+            'last_processed_date': modules.datetime.datetime(1900,1,1,0,0,0),
             'driver_table': '',
             'business_key': '',
             'is_processed': false,

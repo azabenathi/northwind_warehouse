@@ -1,7 +1,7 @@
 {% macro get_processing_date_range(dimension_name, target_date=none) %}
     
     {% set target_date = target_date or (modules.datetime.date.today() - modules.datetime.timedelta(days=1)) %}  -- Check this
-    {% set audit_info = get_dimension_audit_info(dimension_name) %}   
+    {% set audit_info = get_audit_info(dimension_name) %}   
     {% set start_date = audit_info.last_processed_date or target_date %}
     {% set needs_processing = start_date <= target_date %}
 

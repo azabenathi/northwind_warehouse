@@ -61,22 +61,22 @@
                     fax,
                     op,
                     row_hash,
-                    dl_process_date as updated_at,
-                    {% if (audit_info.last_processed_date | string) == '1900-01-01 10:00:00' -%}
+                    TO_TIMESTAMP_NTZ(dl_process_date) as updated_at,
+                    {% if (audit_info.last_processed_date | string) == '1900-01-01 00:00:00' -%}
                         TO_TIMESTAMP_NTZ('{{ audit_info.last_processed_date }}')
                     {%- else -%}
                         TO_TIMESTAMP_NTZ('{{ time_travel }}')
                     {%- endif -%} as effective_date
                 from {{ customer_source }}
                 AT (TIMESTAMP => '{{ time_travel }}'::timestamp_ntz)
-                where dl_process_date > TO_TIMESTAMP_NTZ('{{ state.hwm_date }}')
+                where TO_TIMESTAMP_NTZ(dl_process_date) > TO_TIMESTAMP_NTZ('{{ state.hwm_date }}')
                 
             )
 
             {% set max_processed_query %}
-                SELECT coalesce(max(dl_process_date),TO_TIMESTAMP_NTZ('{{ state.hwm_date }}'))
+                SELECT coalesce(max(TO_TIMESTAMP_NTZ(dl_process_date)),TO_TIMESTAMP_NTZ('{{ state.hwm_date }}'))
                 FROM {{ customer_source }} AT (TIMESTAMP => '{{ time_travel }}'::timestamp_ntz)
-                WHERE dl_process_date > TO_TIMESTAMP_NTZ('{{ state.hwm_date }}')
+                WHERE TO_TIMESTAMP_NTZ(dl_process_date) > TO_TIMESTAMP_NTZ('{{ state.hwm_date }}')
             {% endset %}
             {% set results = run_query(max_processed_query) %}
             {% if results %}
@@ -90,7 +90,7 @@
 
         -- Union Dummy records
         select
-            'Not Found' as customer_id,
+            '0' as customer_id,
             'Not Found' as company_name,
             'Not Found' as contact_name,
             'Not Found' as contact_title,
@@ -113,13 +113,13 @@
                 'contact_title',
                 'country'
             ]) }} as row_hash,
-            to_timestamp_ntz('1900-01-01 10:00:00') as updated_at,
-            to_timestamp_ntz('1900-01-01 10:00:00') as effective_date
+            to_timestamp_ntz('1900-01-01 00:00:00') as updated_at,
+            to_timestamp_ntz('1900-01-01 00:00:00') as effective_date
 
         union all
 
         select
-            'Not Applicable' as customer_id,
+            '-1' as customer_id,
             'Not Applicable' as company_name,
             'Not Applicable' as contact_name,
             'Not Applicable' as contact_title,
@@ -142,8 +142,8 @@
                 'contact_title',
                 'country'
             ]) }} as row_hash,
-            to_timestamp_ntz('1900-01-01 10:00:00') as updated_at,
-            to_timestamp_ntz('1900-01-01 10:00:00') as effective_date
+            to_timestamp_ntz('1900-01-01 00:00:00') as updated_at,
+            to_timestamp_ntz('1900-01-01 00:00:00') as effective_date
     ),
     ranked as (
         select

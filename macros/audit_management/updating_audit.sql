@@ -1,4 +1,4 @@
-{% macro updating_dimension_audit(dimension_name) %}
+{% macro updating_audit(dimension_name) %}
 
     {% set last_processed_date = modules.datetime.datetime.now() %} 
     {% set init_query %}

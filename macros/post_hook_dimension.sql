@@ -21,6 +21,6 @@
         #}
 
 
-        {{ updating_dimension_audit(dimension_name, hwm_date, last_date) }}
+        {{ updating_audit(dimension_name, hwm_date, last_date) }}
     {% endif %}
 {% endmacro %}
